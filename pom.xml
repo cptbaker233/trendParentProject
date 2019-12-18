@@ -11,6 +11,7 @@
         <module>eurekaserver</module>
         <module>third-part-index-data-project</module>
         <module>index-gather-store-service</module>
+        <module>index-codes-service</module>
     </modules>
     <packaging>pom</packaging>
     <parent>

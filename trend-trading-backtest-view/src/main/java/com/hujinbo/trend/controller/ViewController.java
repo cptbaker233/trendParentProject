@@ -10,5 +10,5 @@ public class ViewController {
     public String view() throws Exception {
         return "view";
     }
-
+    
 }

@@ -3,6 +3,7 @@ package com.hujinbo.trend.controller;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.hujinbo.trend.pojo.IndexData;
+import com.hujinbo.trend.pojo.Profit;
 import com.hujinbo.trend.service.BackTestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -27,10 +28,20 @@ public class BackTestController {
         //过滤掉非区间数据
         allIndexDatas = filterByDateRange(allIndexDatas, strStartDate, strEndDate);
 
+        //新增趋势投资曲线部分
+        //设置初始参数
+        int ma = 20;
+        float sellRate = 0.95f;
+        float buyRate = 1.05f;
+        float serviceCharge = 0.001f;
+        Map<String, Object> simulateResult = backTestService.simulate(ma, sellRate, buyRate, serviceCharge, allIndexDatas);
+        List<Profit> profits = (List<Profit>) simulateResult.get("profits");
+
         Map<String, Object> result = new HashMap<>();
         result.put("indexDatas", allIndexDatas);
         result.put("indexStartDate", indexStartDate);
         result.put("indexEndDate", indexEndDate);
+        result.put("profits", profits);
         return result;
     }
 

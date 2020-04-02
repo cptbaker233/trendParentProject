@@ -1,8 +1,11 @@
 package com.hujinbo.trend.service;
 
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
 import com.hujinbo.trend.client.IndexDataClient;
 import com.hujinbo.trend.pojo.IndexData;
 import com.hujinbo.trend.pojo.Profit;
+import com.hujinbo.trend.pojo.Trade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +29,7 @@ public class BackTestService {
     //模拟回测的方法
     public Map<String, Object> simulate(int ma, float sellRate, float buyRate, float serviceCharge, List<IndexData> indexDatas) {
         List<Profit> profits =  new ArrayList<>();
+        List<Trade> trades = new ArrayList<>();
         float initCash = 1000;  //假设初始现金为1000
         float cash = initCash;  //1000充值交易所
         float share = 0;    //初始化份额
@@ -50,6 +54,13 @@ public class BackTestService {
                     if (0 == share) {
                         share = cash / closePoint;
                         cash = 0;
+                        //添加交易记录
+                        Trade trade = new Trade();
+                        trade.setBuyDate(indexData.getDate());
+                        trade.setBuyClosePoint(indexData.getClosePoint());
+                        trade.setSellDate("n/a");
+                        trade.setSellClosePoint(0);
+                        trades.add(trade);
                     } else {
                         //持币观望 do nothing
                     }
@@ -58,6 +69,12 @@ public class BackTestService {
                     if (0 != share) {
                         cash = closePoint * share * (1 - serviceCharge);
                         share = 0;
+                        //追加交易记录
+                        Trade trade = trades.get(trades.size()-1);
+                        trade.setSellDate(indexData.getDate());
+                        trade.setSellClosePoint(indexData.getClosePoint());
+                        float rate = cash / initCash;
+                        trade.setRate(rate);
                     } else {
                         //持股观望 do nothing
                     }
@@ -81,6 +98,7 @@ public class BackTestService {
         }
         Map<String,Object> map = new HashMap<>();
         map.put("profits", profits);
+        map.put("trades", trades);
         return map;
     }
 
@@ -122,4 +140,15 @@ public class BackTestService {
         return avg;
     }
 
+    //获得范围是多少年的方法
+    public float getYear(List<IndexData> allIndexDatas){
+        float years;
+        String sDateStart = allIndexDatas.get(0).getDate();
+        String sDateEnd = allIndexDatas.get(allIndexDatas.size() - 1).getDate();
+        Date dateStart = DateUtil.parse(sDateStart);
+        Date dateEnd = DateUtil.parse(sDateEnd);
+        long days = DateUtil.between(dateStart, dateEnd, DateUnit.DAY);
+        years = days / 365f;
+        return years;
+    }
 }
